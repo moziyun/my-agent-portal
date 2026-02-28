@@ -2,7 +2,7 @@ import streamlit as st
 import openai
 
 # 配置 OpenAI API 密钥
-openai.api_key = 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  # 替换成你自己的密钥
+openai.api_key = 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  # 替换成你自己的密钥
 
 # 页面标题
 st.title("我的全能 Agent 入口")

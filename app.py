@@ -327,7 +327,7 @@ with st.sidebar:
     st.caption("DeepSeek：86000/100000（86%）")
 
 # ===================== 主聊天区 =====================
-st.title("💬 营销智能助手")
+st.title("💬 臭宝的助手")
 
 # 显示消息
 for msg in st.session_state.messages:

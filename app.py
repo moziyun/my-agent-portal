@@ -16,24 +16,24 @@ st.markdown("""
 <style>
 /* 主标题字号调整为 18px，符合日常使用规范 */
 h1[data-testid="stHeadingWithActionElements"] {
-    font-size: 18px !important;
+    font-size: 16px !important;
     font-weight: 600 !important;
 }
 
 /* 副标题字号调整 */
 h2[data-testid="stHeadingWithActionElements"] {
-    font-size: 16px !important;
+    font-size: 14px !important;
     font-weight: 500 !important;
 }
 
 /* 侧边栏标题调整 */
 .css-1d391kg {
-    font-size: 14px !important;
+    font-size: 12px !important;
 }
 
 /* 按钮文字大小调整 */
 .stButton button {
-    font-size: 14px !important;
+    font-size: 12px !important;
 }
 
 /* 输入框文字大小调整 */

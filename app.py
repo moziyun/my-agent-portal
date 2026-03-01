@@ -2,292 +2,183 @@ import streamlit as st
 from openai import OpenAI
 import os
 from datetime import datetime
-import uuid  # 替代 pyperclip，用原生组件实现复制
+import uuid
 
-# --------------------------- 页面基础配置 ---------------------------
+# ===================== 页面配置 =====================
 st.set_page_config(
     page_title="臭宝的Agent",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="auto"
 )
 
-# --------------------------- 初始化样式 ---------------------------
-DEFAULT_STYLES = {
-    "bg_color": "#ffffff",
-    "text_size": 16,
-    "text_color": "#333333",
-    "sidebar_bg": "#f8f9fa"
-}
-
-if "custom_styles" not in st.session_state:
-    st.session_state.custom_styles = DEFAULT_STYLES
-
-def generate_custom_css():
-    s = st.session_state.custom_styles
-    return f"""
-    <style>
-    .stApp {{background-color: {s['bg_color']} !important; color: {s['text_color']} !important; font-size: {s['text_size']}px !important;}}
-    section[data-testid="stSidebar"] {{width:240px !important; min-width:240px !important; max-width:240px !important; background:{s['sidebar_bg']};}}
-    .token-info {{font-size:12px; color:gray; padding:4px; border-top:1px solid #eee; margin-top:6px;}}
-    .history-item {{padding:6px 8px; border-radius:6px; cursor:pointer; margin-bottom:4px; font-size:13px; background:#f1f3f5;}}
-    .history-item:hover {{background:#e9ecef;}}
-    .history-date {{font-size:12px; color:#868e96; margin-top:10px; margin-bottom:4px;}}
-    </style>
-    """
-st.markdown(generate_custom_css(), unsafe_allow_html=True)
-
-# --------------------------- 模型客户端 ---------------------------
-def get_client(model_choice):
-    # 豆包模型配置
-    if model_choice == "豆包Pro":
-        api_key = st.secrets.get("DOUBAO_API_KEY", os.getenv("DOUBAO_API_KEY"))
-        base_url = "https://ark.cn-beijing.volces.com/api/v3"
-        model_name = "doubao-seed-2-0-pro-260215"
-    # DeepSeek模型配置（请替换为实际参数）
-    else:
-        api_key = st.secrets.get("DEEPSEEK_API_KEY", os.getenv("DEEPSEEK_API_KEY"))
-        base_url = "https://api.deepseek.com/v1"  # DeepSeek实际base_url
-        model_name = "deepseek-chat"  # DeepSeek实际模型名
-    
-    if not api_key:
-        st.error(f"未配置 {model_choice} API Key")
-        st.stop()
-    
-    return OpenAI(api_key=api_key, base_url=base_url), model_name
-
-# --------------------------- 历史对话管理（按天、可删、可切） ---------------------------
+# ===================== 初始化会话 =====================
 if "chat_histories" not in st.session_state:
-    st.session_state.chat_histories = {}  # { "会话ID": {"title": "...", "date": "...", "messages": [...]}}
+    st.session_state.chat_histories = {}
 
 if "current_chat_id" not in st.session_state:
-    # 初始化第一个对话
-    chat_id = str(uuid.uuid4())
-    st.session_state.chat_histories[chat_id] = {
+    cid = str(uuid.uuid4())
+    st.session_state.chat_histories[cid] = {
         "title": "新对话",
         "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "messages": []
     }
-    st.session_state.current_chat_id = chat_id
+    st.session_state.current_chat_id = cid
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-def new_chat():
-    chat_id = str(uuid.uuid4())
-    st.session_state.chat_histories[chat_id] = {
-        "title": "新对话",
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "messages": []
+if "personas" not in st.session_state:
+    st.session_state.personas = {
+        "全能营销专家": "你是4A资深营销专家，输出专业、简洁、可直接用于PPT。",
+        "策略总监": "你擅长策略推导、SWOT、定位、传播节奏。",
+        "创意总监": "你擅长Slogan、创意方向、热点借势。",
+        "资深文案": "你擅长小红书/抖音/公众号文案。"
     }
-    st.session_state.current_chat_id = chat_id
+
+# ===================== 对话操作 =====================
+def new_chat():
+    cid = str(uuid.uuid4())
+    st.session_state.chat_histories[cid] = {
+        "title": "新对话", "date": datetime.now().strftime("%Y-%m-%d %H:%M"), "messages": []
+    }
+    st.session_state.current_chat_id = cid
     st.session_state.messages = []
     st.rerun()
 
-def load_chat(chat_id):
-    st.session_state.current_chat_id = chat_id
-    st.session_state.messages = st.session_state.chat_histories[chat_id]["messages"]
+def load_chat(cid):
+    st.session_state.current_chat_id = cid
+    st.session_state.messages = st.session_state.chat_histories[cid]["messages"]
     st.rerun()
 
-def delete_chat(chat_id):
-    if chat_id in st.session_state.chat_histories:
-        del st.session_state.chat_histories[chat_id]
-    # 如果删除的是当前对话，新建一个
-    if st.session_state.current_chat_id == chat_id and st.session_state.chat_histories:
+def delete_chat(cid):
+    if cid in st.session_state.chat_histories:
+        del st.session_state.chat_histories[cid]
+    if st.session_state.current_chat_id == cid and st.session_state.chat_histories:
         st.session_state.current_chat_id = list(st.session_state.chat_histories.keys())[0]
         st.session_state.messages = st.session_state.chat_histories[st.session_state.current_chat_id]["messages"]
-    elif not st.session_state.chat_histories:
+    else:
         new_chat()
     st.rerun()
 
 def save_current():
-    if st.session_state.current_chat_id and st.session_state.messages:
-        # 用第一条用户消息作为标题
-        first_user = next((m["content"] for m in st.session_state.messages if m["role"]=="user"), "新对话")
-        title = (first_user[:20] + "...") if len(first_user)>20 else first_user
-        st.session_state.chat_histories[st.session_state.current_chat_id] = {
-            "title": title,
-            "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "messages": st.session_state.messages
-        }
-
-# --------------------------- 初始化人设 ---------------------------
-if "personas" not in st.session_state:
-    st.session_state.personas = {
-        "全能营销专家": "你是4A资深营销专家，熟悉省广集团工作风格，输出专业、简洁、可直接用在PPT的内容。",
-        "策略总监": "你擅长策略推导、SWOT分析、用户定位、传播节奏规划，能拆解客户需求并形成逻辑闭环。",
-        "创意总监": "你擅长生成Slogan、创意方向、热点借势营销方案，输出30条以上不同风格的创意内容。",
-        "资深文案": "你擅长小红书/抖音/公众号/微博多平台文案创作，支持4A正式、网感口语等多种风格。"
+    if not st.session_state.current_chat_id:
+        return
+    first_user = next((m["content"] for m in st.session_state.messages if m["role"] == "user"), "新对话")
+    title = first_user[:20] + "..." if len(first_user) > 20 else first_user
+    st.session_state.chat_histories[st.session_state.current_chat_id] = {
+        "title": title,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "messages": st.session_state.messages
     }
 
-# --------------------------- 侧边栏（全部功能） ---------------------------
+# ===================== 模型客户端 =====================
+def get_client(model):
+    if model == "豆包Pro":
+        api_key = st.secrets.get("DOUBAO_API_KEY", os.getenv("DOUBAO_API_KEY"))
+        base_url = "https://ark.cn-beijing.volces.com/api/v3"
+        model_name = "doubao-seed-2-0-pro-260215"
+    else:
+        api_key = st.secrets.get("DEEPSEEK_API_KEY", os.getenv("DEEPSEEK_API_KEY"))
+        base_url = "https://api.deepseek.com/v1"
+        model_name = "deepseek-chat"
+
+    if not api_key:
+        st.error(f"请配置 {model} API Key")
+        st.stop()
+    return OpenAI(api_key=api_key, base_url=base_url), model_name
+
+# ===================== 侧边栏 =====================
 with st.sidebar:
     st.title("🧠 营销Agent")
 
-    # 1. 模型选择（两个模型切换）
-    st.subheader("🤖 选择模型")
-    model_choice = st.radio(
-        "", ["豆包Pro", "DeepSeek"], 
-        label_visibility="collapsed",
-        key="model_selector"
-    )
+    # 模型选择
+    st.subheader("模型选择")
+    model_choice = st.radio("", ["豆包Pro", "DeepSeek"], label_visibility="collapsed")
 
-    # 2. 新建对话按钮
+    # 新建对话
     if st.button("➕ 新建对话", use_container_width=True):
         new_chat()
 
     st.divider()
 
-    # 3. 历史对话（按天分组）
-    st.subheader("📜 历史对话")
-    if st.session_state.chat_histories:
-        # 按日期分组
-        histories = list(st.session_state.chat_histories.items())
-        histories.sort(key=lambda x: x[1]["date"], reverse=True)
-        
-        from itertools import groupby
-        def get_day(chat_item): 
-            return chat_item[1]["date"].split(" ")[0]
-        
-        # 遍历每一天的对话
-        for day, group in groupby(histories, key=get_day):
-            st.markdown(f"<div class='history-date'>{day}</div>", unsafe_allow_html=True)
-            for chat_id, item in group:
-                col1, col2 = st.columns([8, 2])
-                with col1:
-                    if st.button(
-                        item["title"], 
-                        key=f"load_{chat_id}", 
-                        use_container_width=True,
-                        help="点击加载该对话"
-                    ):
-                        load_chat(chat_id)
-                with col2:
-                    if st.button(
-                        "🗑", 
-                        key=f"del_{chat_id}", 
-                        use_container_width=True,
-                        help="删除该对话"
-                    ):
-                        delete_chat(chat_id)
-    else:
-        st.caption("暂无历史对话")
+    # 历史对话（按天）
+    st.subheader("历史对话")
+    histories = sorted(st.session_state.chat_histories.items(), key=lambda x: x[1]["date"], reverse=True)
+    from itertools import groupby
+    for day, group in groupby(histories, key=lambda x: x[1]["date"].split(" ")[0]):
+        st.caption(day)
+        for cid, item in group:
+            col1, col2 = st.columns([7, 2])
+            with col1:
+                if st.button(item["title"], key=f"l_{cid}", use_container_width=True):
+                    load_chat(cid)
+            with col2:
+                if st.button("🗑", key=f"d_{cid}", type="primary", use_container_width=True):
+                    delete_chat(cid)
 
     st.divider()
 
-    # 4. 角色管理
-    st.subheader("🔍 角色")
-    persona_list = list(st.session_state.personas.keys())
-    selected_persona = st.radio("", persona_list, label_visibility="collapsed")
-    
-    # 编辑角色
-    edited_prompt = st.text_area(
-        "", st.session_state.personas[selected_persona], 
-        height=100, label_visibility="collapsed"
-    )
-    col_edit, col_del = st.columns(2)
-    with col_edit:
-        if st.button("💾 保存", use_container_width=True):
-            st.session_state.personas[selected_persona] = edited_prompt
-            st.success("角色已保存！")
-    with col_del:
-        if st.button("🗑 删除", use_container_width=True) and len(persona_list) > 1:
-            del st.session_state.personas[selected_persona]
-            st.success("角色已删除！")
+    # 角色
+    st.subheader("角色设定")
+    selected = st.radio("", st.session_state.personas.keys(), label_visibility="collapsed")
+    edited = st.text_area("角色提示词", st.session_state.personas[selected], height=120)
+
+    col_a, col_b = st.columns(2)
+    with col_a:
+        if st.button("💾 保存角色"):
+            st.session_state.personas[selected] = edited
+            st.success("已保存")
+    with col_b:
+        if st.button("🗑 删除角色") and len(st.session_state.personas) > 1:
+            del st.session_state.personas[selected]
             st.rerun()
 
     # 新增角色
-    st.subheader("➕ 新增角色")
-    new_persona_name = st.text_input("", placeholder="输入角色名（如：AE助理）", label_visibility="collapsed")
-    new_persona_prompt = st.text_area("", placeholder="输入角色描述...", height=70, label_visibility="collapsed")
-    if st.button("✅ 添加", use_container_width=True):
-        if new_persona_name.strip() and new_persona_prompt.strip():
-            if new_persona_name not in st.session_state.personas:
-                st.session_state.personas[new_persona_name] = new_persona_prompt
-                st.success("角色添加成功！")
-                st.rerun()
-            else:
-                st.warning("角色名已存在！")
-        else:
-            st.warning("名称和描述不能为空！")
+    new_name = st.text_input("角色名")
+    new_prompt = st.text_area("角色描述", height=80)
+    if st.button("➕ 添加角色") and new_name and new_prompt:
+        st.session_state.personas[new_name] = new_prompt
+        st.rerun()
 
     st.divider()
+    st.caption("📊 模型额度")
+    st.caption("豆包：98000/100000")
+    st.caption("DeepSeek：86000/100000")
 
-    # 5. 样式设置
-    st.subheader("⚙️ 显示设置")
-    st.session_state.custom_styles["bg_color"] = st.color_picker(
-        "背景色", st.session_state.custom_styles["bg_color"], label_visibility="collapsed"
-    )
-    st.session_state.custom_styles["text_color"] = st.color_picker(
-        "文字色", st.session_state.custom_styles["text_color"], label_visibility="collapsed"
-    )
-    st.session_state.custom_styles["text_size"] = st.slider(
-        "文字大小", 12, 24, st.session_state.custom_styles["text_size"], label_visibility="collapsed"
-    )
+# ===================== 主聊天区 =====================
+st.title("💬 营销智能助手")
 
-    # 6. 双模型Token显示
-    st.markdown("""
-    <div class='token-info'>
-    📊 模型Token余量<br>
-    豆包Pro：98000/100000（98%）<br>
-    DeepSeek：86000/100000（86%）
-    </div>
-    """, unsafe_allow_html=True)
-
-# --------------------------- 主聊天区 ---------------------------
-st.title("💬 营销方案智能助手")
-st.caption("基于豆包/DeepSeek模型，适配省广品牌/营销/广告场景")
-
-# 显示当前对话记录
+# 显示消息
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
-        # 为助手消息添加复制按钮（Streamlit原生组件）
-        if msg["role"] == "assistant":
-            # 用st.code实现带复制按钮的文本块
-            st.code(msg["content"], language="markdown")
 
-# 用户输入处理
-user_prompt = st.chat_input("输入你的需求（如：生成品牌策略PPT大纲、写10条slogan）...")
+# 输入
+prompt = st.chat_input("请输入需求...")
 
-if user_prompt:
-    # 保存当前对话状态
+if prompt:
     save_current()
-    
-    # 添加用户消息
-    st.session_state.messages.append({"role": "user", "content": user_prompt})
+    st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.markdown(user_prompt)
-    
-    # 获取模型客户端
+        st.markdown(prompt)
+
     client, model_name = get_client(model_choice)
-    
-    # 构建请求消息
-    request_messages = [
-        {"role": "system", "content": st.session_state.personas[selected_persona]},
-        *st.session_state.messages
-    ]
-    
-    # 调用模型生成回复
+
     with st.chat_message("assistant"):
-        with st.spinner("🤔 正在生成专业方案..."):
+        with st.spinner("生成中..."):
             try:
-                response = client.chat.completions.create(
+                res = client.chat.completions.create(
                     model=model_name,
-                    messages=request_messages,
+                    messages=[
+                        {"role": "system", "content": st.session_state.personas[selected]},
+                        *st.session_state.messages
+                    ],
                     temperature=0.7,
                     max_tokens=4000
                 )
-                assistant_reply = response.choices[0].message.content
-                st.markdown(assistant_reply)
-                
-                # 原生复制功能（替代pyperclip）
-                st.code(assistant_reply, language="markdown")
-                
-                # 保存助手回复
-                st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
+                reply = res.choices[0].message.content
+                st.markdown(reply)
+                st.session_state.messages.append({"role": "assistant", "content": reply})
                 save_current()
-                
             except Exception as e:
-                error_msg = f"生成失败：{str(e)[:200]}"
-                st.error(error_msg)
-                st.info("请检查API Key是否有效，或模型权限是否开通！")
+                st.error(f"错误：{str(e)}")

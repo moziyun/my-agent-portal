@@ -49,6 +49,11 @@ if "style_settings" not in st.session_state:
         "assistant_h3_size": 12
     }
 
+# 确保所有必需的键都存在（兼容旧版本）
+st.session_state.style_settings.setdefault("assistant_h1_size", 16)
+st.session_state.style_settings.setdefault("assistant_h2_size", 14)
+st.session_state.style_settings.setdefault("assistant_h3_size", 12)
+
 # ===================== 应用自定义样式 =====================
 style = st.session_state.style_settings
 custom_css = f"""

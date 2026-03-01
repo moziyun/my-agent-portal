@@ -4,12 +4,22 @@ import os
 from datetime import datetime
 import uuid
 
-# ===================== 页面配置 =====================
+# ===================== 页面配置 + 标题样式 =====================
 st.set_page_config(
-    page_title="臭宝的Agent",
+    page_title="营销全能Agent",
     layout="wide",
     initial_sidebar_state="auto"
 )
+
+# 仅添加标题字号的规范样式（不破坏整体UI规范）
+st.markdown("""
+<style>
+/* 仅调整主标题字号为24px，符合规范 */
+h1[data-testid="stHeadingWithActionElements"] {
+    font-size: 24px !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # ===================== 初始化会话 =====================
 if "chat_histories" not in st.session_state:
@@ -141,12 +151,13 @@ with st.sidebar:
         st.rerun()
 
     st.divider()
+    # Token显示：增加百分比，格式更清晰
     st.caption("📊 模型额度")
-    st.caption("豆包：98000/100000")
-    st.caption("DeepSeek：86000/100000")
+    st.caption("豆包Pro：98000/100000（98%）")
+    st.caption("DeepSeek：86000/100000（86%）")
 
 # ===================== 主聊天区 =====================
-st.title("💬 营销智能助手")
+st.title("臭宝的Agent")
 
 # 显示消息
 for msg in st.session_state.messages:

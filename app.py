@@ -4,19 +4,70 @@ import os
 from datetime import datetime
 import uuid
 
-# ===================== 页面配置 + 标题样式 =====================
+# ===================== 页面配置 + 豆包规范样式 =====================
 st.set_page_config(
     page_title="营销全能Agent",
     layout="wide",
     initial_sidebar_state="auto"
 )
 
-# 仅添加标题字号的规范样式（不破坏整体UI规范）
+# 豆包规范的聊天区域样式（字号、行高、间距、颜色完全对齐）
 st.markdown("""
 <style>
-/* 仅调整主标题字号为24px，符合规范 */
+/* 主标题：豆包规范24px，字重500 */
 h1[data-testid="stHeadingWithActionElements"] {
     font-size: 24px !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    margin-bottom: 16px !important;
+}
+
+/* 聊天消息容器：豆包规范间距 */
+div[data-testid="stChatMessage"] {
+    padding: 12px 16px !important;
+    margin-bottom: 8px !important;
+    border-radius: 8px !important;
+}
+
+/* 聊天文字：豆包规范16px主字号，行高1.6，字重400 */
+div[data-testid="stChatMessage"] p {
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+    font-weight: 400 !important;
+    color: #1f2937 !important; /* 豆包规范正文色 */
+    margin: 0 !important;
+}
+
+/* 用户消息背景：豆包规范浅蓝 */
+div[data-testid="stChatMessage"][data-testid="stChatMessageUser"] {
+    background-color: #e8f4f8 !important;
+}
+
+/* 助手消息背景：豆包规范浅灰 */
+div[data-testid="stChatMessage"][data-testid="stChatMessageAssistant"] {
+    background-color: #f9fafb !important;
+}
+
+/* 聊天输入框：豆包规范16px字号 */
+div[data-testid="stChatInput"] textarea {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+}
+
+/* 侧边栏文字：豆包规范14px */
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] div,
+section[data-testid="stSidebar"] button {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+}
+
+/* Token显示文字：豆包规范12px */
+section[data-testid="stSidebar"] .caption {
+    font-size: 12px !important;
+    color: #6b7280 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -151,20 +202,20 @@ with st.sidebar:
         st.rerun()
 
     st.divider()
-    # Token显示：增加百分比，格式更清晰
+    # Token显示：豆包规范格式（带百分比）
     st.caption("📊 模型额度")
     st.caption("豆包Pro：98000/100000（98%）")
     st.caption("DeepSeek：86000/100000（86%）")
 
-# ===================== 主聊天区 =====================
-st.title("臭宝的Agent")
+# ===================== 主聊天区（豆包规范样式） =====================
+st.title("💬 营销智能助手")
 
-# 显示消息
+# 显示消息（豆包规范字体样式）
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 输入
+# 输入框（豆包规范样式）
 prompt = st.chat_input("请输入需求...")
 
 if prompt:

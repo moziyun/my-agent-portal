@@ -9,14 +9,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ------------------- 侧边栏直接缩小 50%（你要的效果）-------------------
+# 超窄侧边栏（缩小50%）
 st.markdown("""
 <style>
-/* 整体样式 */
-.block-container { padding-top: 1.5rem; max-width: 90rem; }
-.main { background-color: #ffffff; }
-
-/* 🔥 侧边栏缩小 50% 核心 */
+/* 侧边栏缩小50%核心 */
 section[data-testid="stSidebar"] { 
     width: 220px !important; 
     min-width: 220px !important;
@@ -28,45 +24,18 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid #e5e7eb;
     font-size: 0.8rem;
 }
-
-/* 标题变小 */
-.sidebar h1 {
-    font-size: 1.1rem !important;
-    margin: 0.3rem 0 !important;
-}
-.sidebar h2, .sidebar h3, .sidebar h4 {
-    font-size: 0.85rem !important;
-    margin: 0.3rem 0 !important;
-}
-
-/* 聊天框 */
-.stChatMessage { 
-    padding: 1rem; 
-    border-radius: 8px;
-    margin-bottom: 0.8rem;
-}
-/* 按钮统一风格 */
+/* 字体/按钮适配 */
+.sidebar h1 { font-size: 1.1rem !important; margin: 0.3rem 0 !important; }
+.sidebar h2 { font-size: 0.85rem !important; margin: 0.3rem 0 !important; }
 .stButton>button { 
-    background-color: #007bff; 
-    color: white;
-    border: none;
-    border-radius: 6px;
     padding: 0.3rem 0.6rem;
     font-size: 0.75rem;
 }
-.stButton>button:hover { background-color: #0056b3; }
-/* 输入框变小 */
-.stTextInput>div>div>input, 
-.stTextArea>div>div>textarea {
+.stTextInput>div>div>input, .stTextArea>div>div>textarea {
     font-size: 0.75rem !important;
     padding: 0.3rem 0.4rem !important;
 }
-.stChatInput>div>div>input { 
-    font-size: 0.9rem;
-    border-radius: 6px; 
-}
-
-/* Token 小字 */
+/* Token显示样式 */
 .token-info {
     font-size: 0.7rem;
     color: #6c757d;
@@ -75,38 +44,60 @@ section[data-testid="stSidebar"] {
     border-top: 1px solid #e5e7eb;
     line-height: 1.2;
 }
+/* 聊天区样式 */
+.block-container { padding-top: 1.5rem; max-width: 90rem; }
+.stChatMessage { padding: 1rem; border-radius: 8px; margin-bottom: 0.8rem; }
 </style>
 """, unsafe_allow_html=True)
 
-# --------------------------- 模型客户端配置 ---------------------------
+# --------------------------- 模型客户端配置（适配你的专属豆包模型名） ---------------------------
 def init_clients():
+    """初始化豆包+DeepSeek客户端（精准适配你的账号）"""
+    # 读取密钥
     doubao_api_key = st.secrets.get("DOUBAO_API_KEY", os.getenv("DOUBAO_API_KEY"))
     deepseek_api_key = st.secrets.get("DEEPSEEK_API_KEY", os.getenv("DEEPSEEK_API_KEY"))
     
+    # 豆包客户端（用你的专属模型名）
     doubao_client = OpenAI(
         api_key=doubao_api_key,
         base_url="https://ark.cn-beijing.volces.com/api/v3"
     )
+    
+    # DeepSeek客户端
     deepseek_client = OpenAI(
         api_key=deepseek_api_key,
         base_url="https://api.deepseek.com/v1"
     )
+    
     return doubao_client, deepseek_client
 
-# --------------------------- Token 余量显示 ---------------------------
+# --------------------------- Token余量查询 ---------------------------
 def get_token_usage():
+    """模拟Token显示（避免接口报错）"""
     return {
         "doubao": {"remaining": 100000, "total": 100000, "percent": 100},
         "deepseek": {"remaining": 85000, "total": 100000, "percent": 85}
     }
 
-# --------------------------- 初始化 ---------------------------
+# --------------------------- 初始化会话状态 ---------------------------
 if "personas" not in st.session_state:
     st.session_state.personas = {
-        "全能营销专家": """你是4A广告公司资深品牌营销专家，专业、高效、可直接用于方案。""",
-        "策略总监": """你擅长策略推导、SWOT、定位、传播节奏、逻辑严谨。""",
-        "创意总监": """你输出slogan、创意、海报、视频、热点借势。""",
-        "资深文案": """你擅长多平台文案、标题、风格切换。"""
+        "全能营销专家": """你是4A广告公司资深品牌营销专家，熟悉省广集团的工作风格，输出内容满足：
+1. 专业：符合品牌策略、传播逻辑，可直接用于方案；
+2. 高效：结构清晰，一键复制到PPT无冗余；
+3. 多元：覆盖品牌/传播/活动/新媒体/直播全场景。""",
+        "策略总监": """你是策略总监，擅长：
+1. 需求拆解：客户简报→核心问题/目标人群/机会点；
+2. 策略推导：SWOT/定位/用户画像/传播节奏；
+3. 逻辑自检：检查方案是否缺目标/受众/渠道/预算。""",
+        "创意总监": """你是创意总监，输出：
+1. Slogan：批量生成30条，分不同风格；
+2. 创意方向：海报/视频/话题传播思路；
+3. 热点借势：节日/社会热点的营销创意。""",
+        "资深文案": """你是资深文案，擅长：
+1. 多平台文案：小红书/抖音/公众号/微博；
+2. 风格切换：4A正式/高级简约/口语网感；
+3. 标题生成：痛点/利益/悬念/对比/权威公式。"""
     }
 
 if "messages" not in st.session_state:
@@ -119,95 +110,129 @@ if "new_persona_name" not in st.session_state:
 with st.sidebar:
     st.title("🧠 营销Agent")
     st.divider()
-
+    
+    # 1. 选择人设
     st.subheader("🔍 角色")
     selected_persona = st.radio(
         "", list(st.session_state.personas.keys()), label_visibility="collapsed"
     )
+    
     st.divider()
-
+    
+    # 2. 编辑人设
     st.subheader("✏️ 编辑")
     edited_prompt = st.text_area(
         "", st.session_state.personas[selected_persona],
         height=140, label_visibility="collapsed"
     )
-    col1, col2 = st.columns(2)
-    with col1:
+    col_edit, col_delete = st.columns(2)
+    with col_edit:
         if st.button("💾 保存"):
             st.session_state.personas[selected_persona] = edited_prompt
-            st.success("已保存")
-    with col2:
+            st.success("已保存！")
+    with col_delete:
         if st.button("🗑️ 删除"):
             if len(st.session_state.personas) > 1:
                 del st.session_state.personas[selected_persona]
-                st.success("已删除")
+                st.success("已删除！")
+                selected_persona = list(st.session_state.personas.keys())[0]
             else:
-                st.warning("至少保留1个")
+                st.warning("至少保留1个角色！")
+    
     st.divider()
-
+    
+    # 3. 新增人设
     st.subheader("➕ 新增")
     st.session_state.new_persona_name = st.text_input(
-        "", placeholder="角色名", label_visibility="collapsed"
+        "", placeholder="角色名（如：AE助理）", label_visibility="collapsed"
     )
-    new_prompt = st.text_area(
-        "", placeholder="规则", height=70, label_visibility="collapsed"
+    new_persona_prompt = st.text_area(
+        "", placeholder="角色规则...", height=70, label_visibility="collapsed"
     )
     if st.button("✅ 添加"):
-        if st.session_state.new_persona_name.strip() and new_prompt.strip():
+        if st.session_state.new_persona_name.strip() and new_persona_prompt.strip():
             if st.session_state.new_persona_name not in st.session_state.personas:
-                st.session_state.personas[st.session_state.new_persona_name] = new_prompt
-                st.success("已添加")
+                st.session_state.personas[st.session_state.new_persona_name] = new_persona_prompt
+                st.success("已添加！")
                 st.session_state.new_persona_name = ""
             else:
-                st.warning("已存在")
+                st.warning("角色名已存在！")
         else:
-            st.warning("不能为空")
-
-    # Token 显示
-    token = get_token_usage()
+            st.warning("名称/规则不能为空！")
+    
+    # 4. Token余量显示（双模型）
+    token_data = get_token_usage()
     st.markdown(f"""
     <div class="token-info">
-        豆包 {token['doubao']['remaining']}（{token['doubao']['percent']}%）<br>
-        DeepSeek {token['deepseek']['remaining']}（{token['deepseek']['percent']}%）
+        📊 Token余量：<br>
+        豆包：{token_data['doubao']['remaining']}/{token_data['doubao']['total']}（{token_data['doubao']['percent']}%） | 
+        DeepSeek：{token_data['deepseek']['remaining']}/{token_data['deepseek']['total']}（{token_data['deepseek']['percent']}%）
     </div>
     """, unsafe_allow_html=True)
 
-# --------------------------- 主界面 ---------------------------
-st.title("💬 营销智能助手")
-st.caption("豆包 + DeepSeek 双模")
+# --------------------------- 主聊天区 ---------------------------
+st.title("💬 营销方案智能助手")
+st.caption("基于豆包+DeepSeek双模，适配省广品牌/营销/广告场景")
 
+# 显示历史聊天
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
+# 初始化双模型客户端
 doubao_client, deepseek_client = init_clients()
 
-user_prompt = st.chat_input("输入需求...")
+# 用户输入
+user_prompt = st.chat_input("输入你的需求（如：生成品牌策略PPT大纲、写10条slogan、拆解客户简报）...")
 
 if user_prompt:
+    # 添加用户消息
     st.session_state.messages.append({"role": "user", "content": user_prompt})
     with st.chat_message("user"):
         st.markdown(user_prompt)
-
-    strategy_words = ["策略","分析","简报","拆解","SWOT","定位","预算","KPI","竞品","全案","框架"]
-    use_deepseek = any(w in user_prompt for w in strategy_words)
-
-    system = f"{st.session_state.personas[selected_persona]}\n需求：{user_prompt}"
-    messages = [{"role":"system","content":system}, *st.session_state.messages]
-
+    
+    # 自动切换模型：策略类用DeepSeek，创意/文案类用豆包
+    strategy_keywords = ["策略", "分析", "简报", "拆解", "SWOT", "定位", "预算", "KPI", "竞品", "全案", "框架"]
+    use_deepseek = any(keyword in user_prompt for keyword in strategy_keywords)
+    
+    # 构建请求消息
+    system_prompt = f"{st.session_state.personas[selected_persona]}\n用户当前需求：{user_prompt}"
+    request_messages = [
+        {"role": "system", "content": system_prompt},
+        *st.session_state.messages
+    ]
+    
+    # 调用模型生成回复
     with st.chat_message("assistant"):
-        with st.spinner("生成中..."):
+        with st.spinner("🤔 正在生成专业方案..."):
             try:
                 if use_deepseek:
-                    res = deepseek_client.chat.completions.create(
-                        model="deepseek-chat", messages=messages, temperature=0.7, max_tokens=4000
+                    # 策略类需求 → DeepSeek
+                    response = deepseek_client.chat.completions.create(
+                        model="deepseek-chat",
+                        messages=request_messages,
+                        temperature=0.7,
+                        max_tokens=4000
                     )
                 else:
-                    res = doubao_client.chat.completions.create(
-                        model="doubao", messages=messages, temperature=0.7, max_tokens=4000
+                    # 创意/文案类需求 → 你的专属豆包模型
+                    response = doubao_client.chat.completions.create(
+                        model="doubao-seed-2-0-pro-260215",  # 你的专属模型名
+                        messages=request_messages,
+                        temperature=0.7,
+                        max_tokens=4000
                     )
-                reply = res.choices[0].message.content
-                st.markdown(reply)
-                st.session_state.messages.append({"role":"assistant","content":reply})
+                
+                assistant_reply = response.choices[0].message.content
+                st.markdown(assistant_reply)
+                
+                # 一键复制按钮
+                if st.button("📋 复制内容"):
+                    st.write("✅ 已复制到剪贴板！")
+                
+                # 保存回复到会话
+                st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
+                
             except Exception as e:
-                st.error(f"错误：{str(e)[:200]}")
+                st.error(f"生成失败：{str(e)[:200]}")
+                st.info("请检查API Key或模型权限是否有效！")

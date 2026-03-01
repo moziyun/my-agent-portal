@@ -4,70 +4,56 @@ import os
 from datetime import datetime
 import uuid
 
-# ===================== 页面配置 + 豆包规范样式 =====================
+# ===================== 页面配置 + 标题样式 =====================
 st.set_page_config(
     page_title="营销全能Agent",
     layout="wide",
     initial_sidebar_state="auto"
 )
 
-# 豆包规范的聊天区域样式（字号、行高、间距、颜色完全对齐）
+# 调整文字大小，符合日常使用规范
 st.markdown("""
 <style>
-/* 主标题：豆包规范24px，字重500 */
+/* 主标题字号调整为 18px，符合日常使用规范 */
 h1[data-testid="stHeadingWithActionElements"] {
-    font-size: 24px !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+}
+
+/* 副标题字号调整 */
+h2[data-testid="stHeadingWithActionElements"] {
+    font-size: 16px !important;
     font-weight: 500 !important;
-    line-height: 1.4 !important;
-    margin-bottom: 16px !important;
 }
 
-/* 聊天消息容器：豆包规范间距 */
-div[data-testid="stChatMessage"] {
-    padding: 12px 16px !important;
-    margin-bottom: 8px !important;
-    border-radius: 8px !important;
-}
-
-/* 聊天文字：豆包规范16px主字号，行高1.6，字重400 */
-div[data-testid="stChatMessage"] p {
-    font-size: 16px !important;
-    line-height: 1.6 !important;
-    font-weight: 400 !important;
-    color: #1f2937 !important; /* 豆包规范正文色 */
-    margin: 0 !important;
-}
-
-/* 用户消息背景：豆包规范浅蓝 */
-div[data-testid="stChatMessage"][data-testid="stChatMessageUser"] {
-    background-color: #e8f4f8 !important;
-}
-
-/* 助手消息背景：豆包规范浅灰 */
-div[data-testid="stChatMessage"][data-testid="stChatMessageAssistant"] {
-    background-color: #f9fafb !important;
-}
-
-/* 聊天输入框：豆包规范16px字号 */
-div[data-testid="stChatInput"] textarea {
-    font-size: 16px !important;
-    line-height: 1.5 !important;
-    padding: 12px 16px !important;
-    border-radius: 8px !important;
-}
-
-/* 侧边栏文字：豆包规范14px */
-section[data-testid="stSidebar"] p,
-section[data-testid="stSidebar"] div,
-section[data-testid="stSidebar"] button {
+/* 侧边栏标题调整 */
+.css-1d391kg {
     font-size: 14px !important;
-    line-height: 1.5 !important;
 }
 
-/* Token显示文字：豆包规范12px */
-section[data-testid="stSidebar"] .caption {
+/* 按钮文字大小调整 */
+.stButton button {
+    font-size: 14px !important;
+}
+
+/* 输入框文字大小调整 */
+.stTextInput input, .stTextArea textarea {
+    font-size: 14px !important;
+}
+
+/* 聊天消息文字大小调整 */
+.stChatMessage {
+    font-size: 14px !important;
+}
+
+/* 侧边栏 radio 选项文字大小 */
+div[data-testid="stRadio"] > label > div[data-testid="stMarkdownContainer"] > p {
+    font-size: 14px !important;
+}
+
+/* caption 字号调整 */
+.stCaption {
     font-size: 12px !important;
-    color: #6b7280 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -202,20 +188,20 @@ with st.sidebar:
         st.rerun()
 
     st.divider()
-    # Token显示：豆包规范格式（带百分比）
+    # Token显示：增加百分比，格式更清晰
     st.caption("📊 模型额度")
     st.caption("豆包Pro：98000/100000（98%）")
     st.caption("DeepSeek：86000/100000（86%）")
 
-# ===================== 主聊天区（豆包规范样式） =====================
+# ===================== 主聊天区 =====================
 st.title("💬 营销智能助手")
 
-# 显示消息（豆包规范字体样式）
+# 显示消息
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 输入框（豆包规范样式）
+# 输入
 prompt = st.chat_input("请输入需求...")
 
 if prompt:

@@ -43,7 +43,10 @@ if "style_settings" not in st.session_state:
         "user_bg_color": "#e3f2fd",
         "assistant_bg_color": "#f5f5f5",
         "user_text_color": "#000000",
-        "assistant_text_color": "#000000"
+        "assistant_text_color": "#000000",
+        "assistant_h1_size": 16,
+        "assistant_h2_size": 14,
+        "assistant_h3_size": 12
     }
 
 # ===================== 应用自定义样式 =====================
@@ -97,6 +100,25 @@ h2[data-testid="stHeadingWithActionElements"] {{
 [data-testid="stChatMessage"]:has([data-testid="chat-message-avatar-assistant"]) {{
     background-color: {style['assistant_bg_color']} !important;
     border-radius: 8px !important;
+}}
+
+/* AI回答中的标题样式 */
+[data-testid="stChatMessage"]:has([data-testid="chat-message-avatar-assistant"]) h1 {{
+    font-size: {style['assistant_h1_size']}px !important;
+    font-weight: 600 !important;
+    margin: 10px 0 5px 0 !important;
+}}
+
+[data-testid="stChatMessage"]:has([data-testid="chat-message-avatar-assistant"]) h2 {{
+    font-size: {style['assistant_h2_size']}px !important;
+    font-weight: 500 !important;
+    margin: 8px 0 4px 0 !important;
+}}
+
+[data-testid="stChatMessage"]:has([data-testid="chat-message-avatar-assistant"]) h3 {{
+    font-size: {style['assistant_h3_size']}px !important;
+    font-weight: 500 !important;
+    margin: 6px 0 3px 0 !important;
 }}
 
 /* 侧边栏 radio 选项文字大小 */
@@ -237,6 +259,12 @@ with st.sidebar:
             assistant_font = st.slider("文字大小", 10, 24, st.session_state.style_settings["assistant_font_size"], key="assistant_font_size")
             assistant_bg = st.color_picker("背景色", st.session_state.style_settings["assistant_bg_color"], key="assistant_bg_color")
             assistant_text = st.color_picker("文字颜色", st.session_state.style_settings["assistant_text_color"], key="assistant_text_color")
+            
+            st.divider()
+            st.markdown("**AI回答标题大小**")
+            h1_size = st.slider("一级标题 (H1)", 12, 28, st.session_state.style_settings["assistant_h1_size"], key="h1_size")
+            h2_size = st.slider("二级标题 (H2)", 10, 24, st.session_state.style_settings["assistant_h2_size"], key="h2_size")
+            h3_size = st.slider("三级标题 (H3)", 10, 20, st.session_state.style_settings["assistant_h3_size"], key="h3_size")
 
         # 保存按钮
         if st.button("💾 应用设置", use_container_width=True):
@@ -246,7 +274,10 @@ with st.sidebar:
                 "user_bg_color": user_bg,
                 "assistant_bg_color": assistant_bg,
                 "user_text_color": user_text,
-                "assistant_text_color": assistant_text
+                "assistant_text_color": assistant_text,
+                "assistant_h1_size": h1_size,
+                "assistant_h2_size": h2_size,
+                "assistant_h3_size": h3_size
             }
             st.success("样式已更新！")
             st.rerun()
@@ -258,7 +289,7 @@ with st.sidebar:
     st.caption("DeepSeek：86000/100000（86%）")
 
 # ===================== 主聊天区 =====================
-st.title("")
+st.title("💬 营销智能助手")
 
 # 显示消息
 for msg in st.session_state.messages:

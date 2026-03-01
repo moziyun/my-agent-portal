@@ -228,15 +228,15 @@ with st.sidebar:
 
         with col1:
             st.markdown("**用户消息样式**")
-            user_font = st.slider("文字大小", 10, 24, st.session_state.style_settings["user_font_size"])
-            user_bg = st.color_picker("背景色", st.session_state.style_settings["user_bg_color"])
-            user_text = st.color_picker("文字颜色", st.session_state.style_settings["user_text_color"])
+            user_font = st.slider("文字大小", 10, 24, st.session_state.style_settings["user_font_size"], key="user_font_size")
+            user_bg = st.color_picker("背景色", st.session_state.style_settings["user_bg_color"], key="user_bg_color")
+            user_text = st.color_picker("文字颜色", st.session_state.style_settings["user_text_color"], key="user_text_color")
 
         with col2:
             st.markdown("**AI回答样式**")
-            assistant_font = st.slider("文字大小", 10, 24, st.session_state.style_settings["assistant_font_size"])
-            assistant_bg = st.color_picker("背景色", st.session_state.style_settings["assistant_bg_color"])
-            assistant_text = st.color_picker("文字颜色", st.session_state.style_settings["assistant_text_color"])
+            assistant_font = st.slider("文字大小", 10, 24, st.session_state.style_settings["assistant_font_size"], key="assistant_font_size")
+            assistant_bg = st.color_picker("背景色", st.session_state.style_settings["assistant_bg_color"], key="assistant_bg_color")
+            assistant_text = st.color_picker("文字颜色", st.session_state.style_settings["assistant_text_color"], key="assistant_text_color")
 
         # 保存按钮
         if st.button("💾 应用设置", use_container_width=True):
@@ -258,7 +258,7 @@ with st.sidebar:
     st.caption("DeepSeek：86000/100000（86%）")
 
 # ===================== 主聊天区 =====================
-st.title("💬 臭宝助手")
+st.title("💬 营销智能助手")
 
 # 显示消息
 for msg in st.session_state.messages:

@@ -1,34 +1,89 @@
 import streamlit as st
 from openai import OpenAI
 
-# 配置蚂蚁 Ling Studio（国内可访问，无地域限制）
-client = OpenAI(
-    api_key=st.secrets["LING_API_KEY"],  # 读取 Streamlit 配置的密钥
-    base_url="https://lingstudio.antgroup.com/v1"  # 蚂蚁 Ling 的固定接口地址
+# --------------------------- 模型配置 ---------------------------
+def get_doubao_client():
+    return OpenAI(
+        api_key=st.secrets["DOUBAO_API_KEY"],
+        base_url="https://ark.cn-beijing.volces.com/api/v3"
+    )
+
+def get_deepseek_client():
+    return OpenAI(
+        api_key=st.secrets["DEEPSEEK_API_KEY"],
+        base_url="https://api.deepseek.com"
+    )
+
+# --------------------------- 页面样式 ---------------------------
+st.set_page_config(
+    page_title="营销全能Agent",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# 页面标题
-st.title("我的全能 Agent 入口")
+# 清爽样式
+st.markdown("""
+<style>
+.block-container { padding-top: 2rem; max-width: 80rem; }
+.sidebar .sidebar-content { background-color: #f8f9fa; }
+</style>
+""", unsafe_allow_html=True)
 
-# 聊天输入框
-user_input = st.chat_input("请输入需求（如抖音选题、UI 设计灵感、知识整理...）")
+# --------------------------- 人设 ---------------------------
+if "personas" not in st.session_state:
+    st.session_state.personas = {
+        "全能营销": "你是专业品牌营销专家，输出专业、简洁、可直接用于方案。",
+        "策略总监": "你擅长策略推导、SWOT、定位、传播路径，输出严谨有逻辑。",
+        "创意总监": "你输出slogan、海报创意、视频创意、年轻化表达。",
+        "资深文案": "你擅长标题、软文、小红书、抖音文案、精炼表达。"
+    }
+
+# --------------------------- 侧边栏 ---------------------------
+with st.sidebar:
+    st.title("🧠 营销Agent")
+    selected = st.radio("选择人设", list(st.session_state.personas.keys()))
+    st.divider()
+    st.subheader("编辑当前人设")
+    new_prompt = st.text_area("人设内容", st.session_state.personas[selected], height=200)
+    if st.button("✅ 保存人设"):
+        st.session_state.personas[selected] = new_prompt
+        st.success("已保存！")
+
+# --------------------------- 主界面 ---------------------------
+st.title("💬 聊天区")
+system_prompt = st.session_state.personas[selected]
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+user_input = st.chat_input("输入你的需求...")
 
 if user_input:
-    # 根据关键词匹配 Agent 角色
-    if "抖音" in user_input or "自媒体" in user_input:
-        prompt = f"你是抖音自媒体运营专家，专注 UI 设计垂类，帮我处理需求：{user_input}。要求输出3个具体选题+每个选题的文案框架+适合的UI设计风格参考。"
-    elif "UI" in user_input or "设计" in user_input:
-        prompt = f"你是资深 UI 设计师，帮我处理需求：{user_input}。要求给出具体的设计思路、配色方案、图标/字体资源链接、落地步骤。"
-    elif "知识" in user_input or "学习" in user_input:
-        prompt = f"你是知识管理教练，帮我处理需求：{user_input}。要求生成结构化的学习计划（含每日任务）、优质学习资源（课程/书籍/网站）、复盘方法。"
-    else:
-        prompt = user_input
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    with st.chat_message("user"):
+        st.markdown(user_input)
 
-    # 调用 AI 生成回答（兼容 OpenAI 格式）
-    with st.spinner("AI 思考中..."):
-        response = client.chat.completions.create(
-            model="antgpt-4o",  # 蚂蚁 Ling 的免费模型，效果对标 GPT-4o
-            messages=[{"role": "user", "content": prompt}]
-        )
-    # 展示结果
-    st.write(response.choices[0].message.content)
+    # 自动选模型
+    model_keywords = ["策略", "分析", "方案", "SWOT", "简报", "拆解", "总结", "全案", "框架"]
+    use_deepseek = any(k in user_input for k in model_keywords)
+
+    client = get_deepseek_client() if use_deepseek else get_doubao_client()
+    model = "deepseek-chat" if use_deepseek else "doubao-100k-pro"
+
+    with st.chat_message("assistant"):
+        with st.spinner("思考中..."):
+            completion = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    *st.session_state.messages
+                ],
+                temperature=0.7,
+            )
+            res = completion.choices[0].message.content
+            st.markdown(res)
+            st.session_state.messages.append({"role": "assistant", "content": res})

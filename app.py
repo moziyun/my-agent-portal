@@ -4,59 +4,12 @@ import os
 from datetime import datetime
 import uuid
 
-# ===================== 页面配置 + 标题样式 =====================
+# ===================== 页面配置 =====================
 st.set_page_config(
     page_title="营销全能Agent",
     layout="wide",
     initial_sidebar_state="auto"
 )
-
-# 调整文字大小，符合日常使用规范
-st.markdown("""
-<style>
-/* 主标题字号调整为 18px，符合日常使用规范 */
-h1[data-testid="stHeadingWithActionElements"] {
-    font-size: 16px !important;
-    font-weight: 600 !important;
-}
-
-/* 副标题字号调整 */
-h2[data-testid="stHeadingWithActionElements"] {
-    font-size: 14px !important;
-    font-weight: 500 !important;
-}
-
-/* 侧边栏标题调整 */
-.css-1d391kg {
-    font-size: 12px !important;
-}
-
-/* 按钮文字大小调整 */
-.stButton button {
-    font-size: 12px !important;
-}
-
-/* 输入框文字大小调整 */
-.stTextInput input, .stTextArea textarea {
-    font-size: 14px !important;
-}
-
-/* 聊天消息文字大小调整 */
-.stChatMessage {
-    font-size: 14px !important;
-}
-
-/* 侧边栏 radio 选项文字大小 */
-div[data-testid="stRadio"] > label > div[data-testid="stMarkdownContainer"] > p {
-    font-size: 14px !important;
-}
-
-/* caption 字号调整 */
-.stCaption {
-    font-size: 12px !important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 # ===================== 初始化会话 =====================
 if "chat_histories" not in st.session_state:
@@ -81,6 +34,83 @@ if "personas" not in st.session_state:
         "创意总监": "你擅长Slogan、创意方向、热点借势。",
         "资深文案": "你擅长小红书/抖音/公众号文案。"
     }
+
+# ===================== 界面样式设置 =====================
+if "style_settings" not in st.session_state:
+    st.session_state.style_settings = {
+        "user_font_size": 14,
+        "assistant_font_size": 14,
+        "user_bg_color": "#e3f2fd",
+        "assistant_bg_color": "#f5f5f5",
+        "user_text_color": "#000000",
+        "assistant_text_color": "#000000"
+    }
+
+# ===================== 应用自定义样式 =====================
+style = st.session_state.style_settings
+custom_css = f"""
+<style>
+/* 主标题字号调整为 18px，符合日常使用规范 */
+h1[data-testid="stHeadingWithActionElements"] {{
+    font-size: 18px !important;
+    font-weight: 600 !important;
+}}
+
+/* 副标题字号调整 */
+h2[data-testid="stHeadingWithActionElements"] {{
+    font-size: 16px !important;
+    font-weight: 500 !important;
+}}
+
+/* 侧边栏标题调整 */
+.css-1d391kg {{
+    font-size: 14px !important;
+}}
+
+/* 按钮文字大小调整 */
+.stButton button {{
+    font-size: 14px !important;
+}}
+
+/* 输入框文字大小调整 */
+.stTextInput input, .stTextArea textarea {{
+    font-size: 14px !important;
+}}
+
+/* 用户消息样式 */
+[data-testid="stChatMessage"]:has([data-testid="chat-message-avatar-user"]) .stMarkdown {{
+    font-size: {style['user_font_size']}px !important;
+    color: {style['user_text_color']} !important;
+}}
+
+[data-testid="stChatMessage"]:has([data-testid="chat-message-avatar-user"]) {{
+    background-color: {style['user_bg_color']} !important;
+    border-radius: 8px !important;
+}}
+
+/* AI回答样式 */
+[data-testid="stChatMessage"]:has([data-testid="chat-message-avatar-assistant"]) .stMarkdown {{
+    font-size: {style['assistant_font_size']}px !important;
+    color: {style['assistant_text_color']} !important;
+}}
+
+[data-testid="stChatMessage"]:has([data-testid="chat-message-avatar-assistant"]) {{
+    background-color: {style['assistant_bg_color']} !important;
+    border-radius: 8px !important;
+}}
+
+/* 侧边栏 radio 选项文字大小 */
+div[data-testid="stRadio"] > label > div[data-testid="stMarkdownContainer"] > p {{
+    font-size: 14px !important;
+}}
+
+/* caption 字号调整 */
+.stCaption {{
+    font-size: 12px !important;
+}}
+</style>
+"""
+st.markdown(custom_css, unsafe_allow_html=True)
 
 # ===================== 对话操作 =====================
 def new_chat():
@@ -188,13 +218,47 @@ with st.sidebar:
         st.rerun()
 
     st.divider()
+
+    # ===================== 界面设置 =====================
+    st.subheader("🎨 界面设置")
+
+    # 展开界面设置
+    with st.expander("样式设置", expanded=False):
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("**用户消息样式**")
+            user_font = st.slider("文字大小", 10, 24, st.session_state.style_settings["user_font_size"])
+            user_bg = st.color_picker("背景色", st.session_state.style_settings["user_bg_color"])
+            user_text = st.color_picker("文字颜色", st.session_state.style_settings["user_text_color"])
+
+        with col2:
+            st.markdown("**AI回答样式**")
+            assistant_font = st.slider("文字大小", 10, 24, st.session_state.style_settings["assistant_font_size"])
+            assistant_bg = st.color_picker("背景色", st.session_state.style_settings["assistant_bg_color"])
+            assistant_text = st.color_picker("文字颜色", st.session_state.style_settings["assistant_text_color"])
+
+        # 保存按钮
+        if st.button("💾 应用设置", use_container_width=True):
+            st.session_state.style_settings = {
+                "user_font_size": user_font,
+                "assistant_font_size": assistant_font,
+                "user_bg_color": user_bg,
+                "assistant_bg_color": assistant_bg,
+                "user_text_color": user_text,
+                "assistant_text_color": assistant_text
+            }
+            st.success("样式已更新！")
+            st.rerun()
+
+    st.divider()
     # Token显示：增加百分比，格式更清晰
     st.caption("📊 模型额度")
     st.caption("豆包Pro：98000/100000（98%）")
     st.caption("DeepSeek：86000/100000（86%）")
 
 # ===================== 主聊天区 =====================
-st.title("💬 营销智能助手")
+st.title("💬 臭宝助手")
 
 # 显示消息
 for msg in st.session_state.messages:

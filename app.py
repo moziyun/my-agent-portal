@@ -255,34 +255,67 @@ with st.sidebar:
 
         with col1:
             st.markdown("**用户消息样式**")
-            user_font = st.slider("文字大小", 10, 24, st.session_state.style_settings["user_font_size"], key="user_font_size")
+            user_font = st.selectbox(
+                "文字大小",
+                options=[("小", 12), ("中", 14), ("大", 16), ("特大", 18)],
+                index=1,
+                format_func=lambda x: x[0],
+                key="user_font_size"
+            )
             user_bg = st.color_picker("背景色", st.session_state.style_settings["user_bg_color"], key="user_bg_color")
             user_text = st.color_picker("文字颜色", st.session_state.style_settings["user_text_color"], key="user_text_color")
 
         with col2:
             st.markdown("**AI回答样式**")
-            assistant_font = st.slider("文字大小", 10, 24, st.session_state.style_settings["assistant_font_size"], key="assistant_font_size")
-            assistant_bg = st.color_picker("背景色", st.session_state.style_settings["assistant_bg_color"], key="assistant_bg_color")
-            assistant_text = st.color_picker("文字颜色", st.session_state.style_settings["assistant_text_color"], key="assistant_text_color")
+            
+            st.write("📝 **正文文字大小**")
+            assistant_font = st.selectbox(
+                "请选择正文文字大小",
+                options=[("小", 12), ("中", 14), ("大", 16), ("特大", 18)],
+                index=1,
+                format_func=lambda x: x[0],
+                key="assistant_font_size"
+            )
             
             st.divider()
-            st.markdown("**AI回答标题大小**")
-            h1_size = st.slider("一级标题 (H1)", 12, 28, st.session_state.style_settings["assistant_h1_size"], key="h1_size")
-            h2_size = st.slider("二级标题 (H2)", 10, 24, st.session_state.style_settings["assistant_h2_size"], key="h2_size")
-            h3_size = st.slider("三级标题 (H3)", 10, 20, st.session_state.style_settings["assistant_h3_size"], key="h3_size")
+            st.write("📌 **标题文字大小**")
+            h1_size = st.selectbox(
+                "一级标题 (H1) 大小",
+                options=[("小", 14), ("中", 16), ("大", 18), ("特大", 20)],
+                index=1,
+                format_func=lambda x: x[0],
+                key="h1_size"
+            )
+            h2_size = st.selectbox(
+                "二级标题 (H2) 大小",
+                options=[("小", 12), ("中", 14), ("大", 16), ("特大", 18)],
+                index=1,
+                format_func=lambda x: x[0],
+                key="h2_size"
+            )
+            h3_size = st.selectbox(
+                "三级标题 (H3) 大小",
+                options=[("小", 10), ("中", 12), ("大", 14), ("特大", 16)],
+                index=1,
+                format_func=lambda x: x[0],
+                key="h3_size"
+            )
+            
+            assistant_bg = st.color_picker("背景色", st.session_state.style_settings["assistant_bg_color"], key="assistant_bg_color")
+            assistant_text = st.color_picker("文字颜色", st.session_state.style_settings["assistant_text_color"], key="assistant_text_color")
 
         # 保存按钮
         if st.button("💾 应用设置", use_container_width=True):
             st.session_state.style_settings = {
-                "user_font_size": user_font,
-                "assistant_font_size": assistant_font,
+                "user_font_size": user_font[1],
+                "assistant_font_size": assistant_font[1],
                 "user_bg_color": user_bg,
                 "assistant_bg_color": assistant_bg,
                 "user_text_color": user_text,
                 "assistant_text_color": assistant_text,
-                "assistant_h1_size": h1_size,
-                "assistant_h2_size": h2_size,
-                "assistant_h3_size": h3_size
+                "assistant_h1_size": h1_size[1],
+                "assistant_h2_size": h2_size[1],
+                "assistant_h3_size": h3_size[1]
             }
             st.success("样式已更新！")
             st.rerun()
